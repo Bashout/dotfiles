@@ -114,72 +114,66 @@
 
 ;;; Packages
 
-(require 'package)
+;; Straight.el
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
 
-(let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
-                    (not (gnutls-available-p))))
-       (proto (if no-ssl "http://" "https://")))
-  (add-to-list 'package-archives (cons "melpa" (concat proto "melpa.org/packages/")) t)
-  (add-to-list 'package-archives (cons "melpa-stable" (concat proto "stable.melpa.org/packages/")) t))
-
-(setq package-archive-priorities
-      '(("gnu" . 10)
-        ("melpa" . 5)
-        ("melpa-stable" . 0)))
-
-(setq package-enable-at-startup nil)
-(package-initialize)
-
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
-
-(eval-when-compile
-  (require 'use-package))
-
-(require 'use-package-ensure)
-(setq use-package-always-ensure t)
-
-;;; File types
+(straight-use-package 'use-package)
 
 (use-package undo-propose
+  :straight t
   :config (global-set-key (kbd "C-c u") 'undo-propose))
 
 (setq scheme-program-name "csi -:c")
 
-(use-package clojure-mode :defer t)
+(use-package clojure-mode :straight t :defer t)
 
 (use-package julia-mode
+  :straight t
   :defer t
   :config
   (use-package julia-repl
+    :straight t
     :hook (julia-mode . julia-repl-mode)))
 
-(use-package markdown-mode :defer t)
+(use-package markdown-mode :straight t :defer t)
+
+(use-package async :straight t)
+(use-package s :straight t)
 
 (use-package org
+  :straight t
   :defer t
   :hook (org-mode . org-indent-mode)
   :config
   ;; TODO set org directory for org-agenda
-  (require 'org-man))
+  (require 'org-man)
 
-(use-package restclient :mode ("\\.restclient\\'" . restclient-mode))
+  (use-package org-roam
+    :after org
+      :hook (org-mode . org-roam-mode)
+      :straight (:host github :repo "jethrokuan/org-roam")
+      :custom
+      (org-roam-directory "~/Wiki/")
+      (org-roam-zettel-indicator "")
+      :bind
+      ("C-c n l" . org-roam)
+      ("C-c n t" . org-roam-today)
+      ("C-c n f" . org-roam-find-file)
+      ("C-c n i" . org-roam-insert)
+      ("C-c n g" . org-roam-show-graph)))
 
-(use-package ledger-mode :defer t)
+(use-package restclient :straight t :mode ("\\.restclient\\'" . restclient-mode))
+
+(use-package ledger-mode :straight t :defer t)
 ;; FIXME `ledger-mode-clean-buffer' should sort in reverse order
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   (quote
-    (undo-propose clojure-mode julia-shell julia-repl julia-mode use-package org restclient markdown-mode ledger-mode))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
